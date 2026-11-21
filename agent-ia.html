@@ -165,12 +165,19 @@ footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--line
   .orbit { animation: spin 14s linear infinite; transform-origin: 200px 200px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 }
+/* Retour au sommaire */
+.back { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 1.5rem; font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); text-decoration: none; padding: 0.35rem 0.7rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
+.back:hover { color: var(--accent); border-color: var(--accent); }
+.back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+header.hero { padding-top: 2.5rem; }
 </style>
 <style>html{color-scheme:light}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
 
 <div class="wrap">
+
+<a class="back" href="./">← Sommaire</a>
 
 <header class="hero">
   <span class="eyebrow">Comprendre l'IA · fiche explicative</span>
@@ -351,6 +358,7 @@ footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--line
 
 <footer>
   En une phrase : un agent IA, c'est un modèle de langage placé dans une boucle, équipé d'outils et chargé d'un objectif, qui décide lui-même de ses actions jusqu'à l'atteindre.
+  <p style="margin-top:1rem"><a class="back" href="./" style="margin-top:0">← Retour au sommaire</a></p>
 </footer>
 
 </div>
