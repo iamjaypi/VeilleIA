@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Page explicative : ce qu'est un agent IA, comment il fonctionne, ses composants, un exemple concret et ses limites.">
+<title>Qu'est-ce qu'un agent IA ?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Mise en page : une colonne de lecture (~68ch), coupée par une boucle schématique et une trace d'exécution façon terminal */
+:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --ink: #141b2b;
+  --muted: #566078;
+  --line: #d9dfe9;
+  --accent: #2f5bff;
+  --accent-soft: #e3e9ff;
+  --signal: #e8a400;
+  --term-bg: #10151f;
+  --term-fg: #d7deea;
+  --term-dim: #7f8aa3;
+  --term-tool: #8fb0ff;
+  --term-ok: #6fd3a0;
+  --term-err: #ff8f80;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d121c; --surface: #151c2a; --ink: #e6ebf4; --muted: #9aa5bd; --line: #26304a;
+    --accent: #7d9bff; --accent-soft: #1c2747; --signal: #f2bb3a;
+    --term-bg: #080b12; --term-fg: #d7deea; --term-dim: #7f8aa3; --term-tool: #8fb0ff; --term-ok: #6fd3a0; --term-err: #ff8f80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d121c; --surface: #151c2a; --ink: #e6ebf4; --muted: #9aa5bd; --line: #26304a;
+  --accent: #7d9bff; --accent-soft: #1c2747; --signal: #f2bb3a;
+  --term-bg: #080b12; --term-fg: #d7deea; --term-dim: #7f8aa3; --term-tool: #8fb0ff; --term-ok: #6fd3a0; --term-err: #ff8f80;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 4rem;
+}
+.wrap { max-width: 68rem; margin: 0 auto; }
+.col { max-width: 42rem; }
+
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.1; margin: 0; }
+h1 { font-size: clamp(2.4rem, 6vw, 4.2rem); font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: clamp(1.6rem, 3.2vw, 2.2rem); font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 1.15rem; font-weight: 700; }
+p { margin: 0; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--accent);
+}
+.lead { font-size: 1.25rem; color: var(--muted); max-width: 40rem; }
+.stack { display: flex; flex-direction: column; gap: 1rem; }
+section { padding-block: 4rem 0; display: flex; flex-direction: column; gap: 1.75rem; }
+
+/* Hero */
+header.hero { padding-block: 4.5rem 1rem; display: flex; flex-direction: column; gap: 1.5rem; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.formula {
+  font-family: var(--font-mono); font-size: 0.95rem; color: var(--ink);
+  display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.5rem;
+}
+.formula span.chip {
+  background: var(--surface); border: 1px solid var(--line); padding: 0.3rem 0.7rem; border-radius: 6px;
+}
+.formula span.op { color: var(--muted); }
+.formula span.res { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+/* Comparaison */
+.table-scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 34rem; font-size: 0.98rem; }
+th, td { text-align: left; padding: 0.85rem 1rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+tbody th { font-weight: 600; width: 28%; }
+td.agent { color: var(--ink); font-weight: 500; }
+td.bot { color: var(--muted); }
+
+/* Boucle */
+.loop { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 2.5rem; align-items: center; }
+.loop svg { width: 100%; max-width: 30rem; height: auto; display: block; margin: 0 auto; }
+.loop svg text { font-family: var(--font-display); }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.1rem; }
+.steps li { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); gap: 0.75rem; }
+.steps .n {
+  font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent);
+  border: 1.5px solid var(--accent); border-radius: 50%; width: 2rem; height: 2rem;
+  display: grid; place-items: center;
+}
+.steps p { color: var(--muted); font-size: 0.97rem; }
+.steps h3 { margin-bottom: 0.15rem; }
+
+/* Briques */
+.bricks { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.brick { background: var(--surface); padding: 1.4rem 1.3rem; display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.brick .tag { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+.brick p { font-size: 0.95rem; color: var(--muted); }
+
+/* Trace */
+.trace {
+  background: var(--term-bg); color: var(--term-fg); border-radius: 10px;
+  font-family: var(--font-mono); font-size: 0.86rem; line-height: 1.6;
+  overflow-x: auto;
+}
+.trace-bar { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.75rem 1.1rem; border-bottom: 1px solid #ffffff1a; color: var(--term-dim); font-size: 0.78rem; }
+.trace ol { list-style: none; margin: 0; padding: 1rem 1.1rem 1.25rem; display: flex; flex-direction: column; gap: 0.55rem; min-width: 34rem; }
+.trace li { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 1rem; }
+.trace .k { color: var(--term-dim); text-transform: uppercase; font-size: 0.74rem; letter-spacing: 0.08em; padding-top: 0.1rem; }
+.trace .k.think { color: var(--signal); }
+.trace .k.act { color: var(--term-tool); }
+.trace .k.obs { color: var(--term-dim); }
+.trace .k.done { color: var(--term-ok); }
+.trace .err { color: var(--term-err); }
+.trace .ok { color: var(--term-ok); }
+.trace .fn { color: var(--term-tool); }
+.caption { font-size: 0.9rem; color: var(--muted); }
+
+/* Autonomie */
+.scale { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
+.level { border-top: 3px solid var(--line); padding-top: 0.9rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.level:nth-child(2) { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.level:nth-child(3) { border-color: color-mix(in srgb, var(--accent) 70%, var(--line)); }
+.level:nth-child(4) { border-color: var(--accent); }
+.level .tag { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+.level p { font-size: 0.93rem; color: var(--muted); }
+
+/* Limites */
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.5rem; }
+.two ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; color: var(--muted); }
+.two ul strong { color: var(--ink); font-weight: 600; }
+
+/* Glossaire */
+dl.gloss { display: grid; grid-template-columns: 12rem minmax(0, 1fr); gap: 0.9rem 1.5rem; margin: 0; }
+dl.gloss dt { font-family: var(--font-mono); font-size: 0.9rem; color: var(--accent); padding-top: 0.15rem; }
+dl.gloss dd { margin: 0; color: var(--muted); }
+
+footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.88rem; }
+
+@media (max-width: 760px) {
+  .loop, .two { grid-template-columns: minmax(0, 1fr); }
+  .scale { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  dl.gloss { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
+  dl.gloss dd { margin-bottom: 0.8rem; }
+  header.hero { padding-block: 3rem 0.5rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .orbit { animation: spin 14s linear infinite; transform-origin: 200px 200px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+}
+</style>
+<style>html{color-scheme:light}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="hero">
+  <span class="eyebrow">Comprendre l'IA · fiche explicative</span>
+  <h1>Un agent IA est une IA qui <em>agit</em>, pas seulement qui répond.</h1>
+  <p class="lead">Un chatbot vous donne une réponse. Un agent reçoit un objectif, choisit lui-même les étapes, utilise des outils pour les exécuter, regarde le résultat et recommence jusqu'à ce que le travail soit fait.</p>
+  <div class="formula" aria-label="Agent égale modèle plus outils plus boucle plus objectif">
+    <span class="chip">modèle de langage</span><span class="op">+</span>
+    <span class="chip">outils</span><span class="op">+</span>
+    <span class="chip">boucle</span><span class="op">+</span>
+    <span class="chip">objectif</span><span class="op">=</span>
+    <span class="chip res">agent</span>
+  </div>
+</header>
+
+<section>
+  <div class="stack col">
+    <span class="eyebrow">Chatbot ou agent</span>
+    <h2>La différence tient à qui pilote les étapes</h2>
+    <p>Avec un chatbot, c'est vous qui enchaînez les questions. Avec un agent, vous donnez la destination et il trace le chemin.</p>
+  </div>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th></th><th>Chatbot classique</th><th>Agent IA</th></tr></thead>
+      <tbody>
+        <tr><th>Ce qu'on lui donne</th><td class="bot">Une question</td><td class="agent">Un objectif</td></tr>
+        <tr><th>Ce qu'il produit</th><td class="bot">Un texte</td><td class="agent">Des actions et un résultat</td></tr>
+        <tr><th>Nombre d'étapes</th><td class="bot">Une réponse par message</td><td class="agent">Autant que nécessaire, enchaînées seul</td></tr>
+        <tr><th>Accès au monde</th><td class="bot">Ce qu'il a appris</td><td class="agent">Fichiers, web, API, logiciels via des outils</td></tr>
+        <tr><th>Gestion des erreurs</th><td class="bot">C'est à vous de reformuler</td><td class="agent">Il constate l'échec et essaie autre chose</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="stack col">
+    <span class="eyebrow">Le fonctionnement</span>
+    <h2>Une boucle qui tourne jusqu'à l'objectif</h2>
+    <p>Tous les agents, du plus simple au plus avancé, reposent sur le même cycle. Le modèle ne fait qu'une chose à chaque tour : décider de la prochaine action à partir de tout ce qu'il a vu jusque-là.</p>
+  </div>
+  <div class="loop">
+    <svg viewBox="0 0 400 400" role="img" aria-label="Schéma de la boucle d'un agent : comprendre, planifier, agir, observer, puis retour">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"></path>
+        </marker>
+      </defs>
+      <circle cx="200" cy="200" r="130" fill="none" stroke="var(--line)" stroke-width="2"></circle>
+      <g class="orbit"><circle cx="200" cy="70" r="5" fill="var(--signal)"></circle></g>
+      <path d="M 262 86 A 130 130 0 0 1 314 138" fill="none" stroke="var(--accent)" stroke-width="2.5" marker-end="url(#arr)"></path>
+      <path d="M 314 262 A 130 130 0 0 1 262 314" fill="none" stroke="var(--accent)" stroke-width="2.5" marker-end="url(#arr)"></path>
+      <path d="M 138 314 A 130 130 0 0 1 86 262" fill="none" stroke="var(--accent)" stroke-width="2.5" marker-end="url(#arr)"></path>
+      <path d="M 86 138 A 130 130 0 0 1 138 86" fill="none" stroke="var(--accent)" stroke-width="2.5" marker-end="url(#arr)"></path>
+
+      <g>
+        <rect x="140" y="48" width="120" height="44" rx="22" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"></rect>
+        <text x="200" y="76" text-anchor="middle" font-size="16" font-weight="700" fill="var(--ink)">Comprendre</text>
+      </g>
+      <g>
+        <rect x="278" y="178" width="110" height="44" rx="22" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"></rect>
+        <text x="333" y="206" text-anchor="middle" font-size="16" font-weight="700" fill="var(--ink)">Planifier</text>
+      </g>
+      <g>
+        <rect x="150" y="308" width="100" height="44" rx="22" fill="var(--accent)" stroke="var(--accent)" stroke-width="1.5"></rect>
+        <text x="200" y="336" text-anchor="middle" font-size="16" font-weight="700" fill="var(--bg)">Agir</text>
+      </g>
+      <g>
+        <rect x="12" y="178" width="110" height="44" rx="22" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"></rect>
+        <text x="67" y="206" text-anchor="middle" font-size="16" font-weight="700" fill="var(--ink)">Observer</text>
+      </g>
+
+      <text x="200" y="192" text-anchor="middle" font-size="14" fill="var(--muted)">objectif</text>
+      <text x="200" y="214" text-anchor="middle" font-size="14" fill="var(--muted)">atteint ?</text>
+      <text x="200" y="240" text-anchor="middle" font-size="12" fill="var(--signal)" style="font-family: var(--font-mono)">oui → fin</text>
+    </svg>
+
+    <ol class="steps">
+      <li><span class="n">1</span><div><h3>Comprendre</h3><p>L'agent lit l'objectif, ses consignes et tout ce qui s'est passé aux tours précédents.</p></div></li>
+      <li><span class="n">2</span><div><h3>Planifier</h3><p>Il décompose le problème et choisit la prochaine étape la plus utile.</p></div></li>
+      <li><span class="n">3</span><div><h3>Agir</h3><p>Il appelle un outil : chercher sur le web, lire un fichier, lancer un programme, envoyer une requête.</p></div></li>
+      <li><span class="n">4</span><div><h3>Observer</h3><p>Le résultat de l'outil revient dans son contexte. Réussite ou erreur, il s'en sert pour le tour suivant.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="stack col">
+    <span class="eyebrow">Les composants</span>
+    <h2>Ce qu'il y a dans un agent</h2>
+  </div>
+  <div class="bricks">
+    <div class="brick"><span class="tag">le cerveau</span><h3>Le modèle de langage</h3><p>Un LLM comme Claude ou GPT. Il raisonne, rédige et décide quel outil utiliser à chaque étape.</p></div>
+    <div class="brick"><span class="tag">les mains</span><h3>Les outils</h3><p>Des fonctions que le modèle peut déclencher : recherche web, lecture de fichiers, terminal, agenda, base de données.</p></div>
+    <div class="brick"><span class="tag">le carnet</span><h3>La mémoire</h3><p>Le contexte de la tâche en cours, et parfois des notes conservées d'une session à l'autre.</p></div>
+    <div class="brick"><span class="tag">la feuille de route</span><h3>Les consignes</h3><p>Les instructions système : rôle, règles à respecter, actions interdites, quand demander confirmation.</p></div>
+    <div class="brick"><span class="tag">le terrain</span><h3>L'environnement</h3><p>Là où l'agent agit : un ordinateur, un navigateur, un dépôt de code, une messagerie.</p></div>
+    <div class="brick"><span class="tag">le moteur</span><h3>La boucle d'orchestration</h3><p>Le programme qui envoie le contexte au modèle, exécute ses appels d'outils et lui renvoie les résultats.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="stack col">
+    <span class="eyebrow">Un exemple réel</span>
+    <h2>Un agent de code corrige un test</h2>
+    <p>Voici à quoi ressemble, simplifiée, la trace d'un agent de programmation à qui l'on demande de réparer un test qui échoue. Chaque ligne correspond à un passage dans la boucle.</p>
+  </div>
+  <div class="trace" role="region" aria-label="Trace d'exécution d'un agent">
+    <div class="trace-bar"><span>objectif : « Le test test_total_panier échoue, corrige-le. »</span><span>7 étapes · 3 outils</span></div>
+    <ol>
+      <li><span class="k think">pense</span><span>Je dois d'abord voir l'erreur exacte.</span></li>
+      <li><span class="k act">agit</span><span><span class="fn">terminal</span>("pytest tests/test_panier.py")</span></li>
+      <li><span class="k obs">observe</span><span class="err">AssertionError : 107.99 != 108.0 (arrondi de la TVA)</span></li>
+      <li><span class="k act">agit</span><span><span class="fn">lire_fichier</span>("panier/calcul.py")</span></li>
+      <li><span class="k think">pense</span><span>Le total est calculé en flottants puis tronqué. Il faut arrondir au centime après la TVA.</span></li>
+      <li><span class="k act">agit</span><span><span class="fn">modifier_fichier</span>("panier/calcul.py", round(total * 1.2, 2))</span></li>
+      <li><span class="k act">agit</span><span><span class="fn">terminal</span>("pytest") → <span class="ok">42 passed</span></span></li>
+      <li><span class="k done">terminé</span><span>Correction appliquée, tous les tests passent. Résumé envoyé à l'utilisateur.</span></li>
+    </ol>
+  </div>
+  <p class="caption">Personne n'a dit à l'agent quel fichier ouvrir ni quelle ligne changer. Il l'a déduit en lisant les résultats de ses propres actions.</p>
+</section>
+
+<section>
+  <div class="stack col">
+    <span class="eyebrow">Niveaux d'autonomie</span>
+    <h2>Plus ou moins de liberté</h2>
+    <p>Tous les agents n'ont pas la même marge de manœuvre. On règle le curseur selon le risque de la tâche.</p>
+  </div>
+  <div class="scale">
+    <div class="level"><span class="tag">niveau 1</span><h3>Assistant</h3><p>Répond et suggère. L'humain fait tout.</p></div>
+    <div class="level"><span class="tag">niveau 2</span><h3>Copilote</h3><p>Propose une action, l'humain valide chacune.</p></div>
+    <div class="level"><span class="tag">niveau 3</span><h3>Agent supervisé</h3><p>Enchaîne seul les étapes sûres, demande avant les actions sensibles.</p></div>
+    <div class="level"><span class="tag">niveau 4</span><h3>Agent autonome</h3><p>Mène la tâche de bout en bout et rend compte à la fin.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="two">
+    <div class="stack">
+      <span class="eyebrow">Ce qu'ils font bien</span>
+      <h2>Usages courants</h2>
+      <ul>
+        <li><strong>Programmation :</strong> corriger des bugs, écrire des tests, migrer du code.</li>
+        <li><strong>Recherche :</strong> consulter des dizaines de sources et en faire une synthèse.</li>
+        <li><strong>Support client :</strong> consulter une commande, lancer un remboursement selon les règles.</li>
+        <li><strong>Bureautique :</strong> trier des e-mails, remplir des tableaux, préparer des rapports.</li>
+        <li><strong>Navigation web :</strong> comparer des offres, remplir des formulaires.</li>
+      </ul>
+    </div>
+    <div class="stack">
+      <span class="eyebrow">Ce qu'il faut surveiller</span>
+      <h2>Limites et garde-fous</h2>
+      <ul>
+        <li><strong>Erreurs en cascade :</strong> une mauvaise décision au début peut fausser toute la suite.</li>
+        <li><strong>Coût et lenteur :</strong> chaque tour de boucle consomme du calcul.</li>
+        <li><strong>Injection de consignes :</strong> une page web peut contenir du texte qui tente de détourner l'agent.</li>
+        <li><strong>Actions irréversibles :</strong> paiement, suppression, envoi d'un message. On exige une validation humaine.</li>
+        <li><strong>Permissions minimales :</strong> on ne donne à l'agent que les outils dont il a besoin.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="stack col">
+    <span class="eyebrow">Vocabulaire</span>
+    <h2>Les mots à connaître</h2>
+  </div>
+  <dl class="gloss">
+    <dt>LLM</dt><dd>Large Language Model. Le modèle qui génère le texte et prend les décisions.</dd>
+    <dt>appel d'outil</dt><dd>Le moment où le modèle demande l'exécution d'une fonction, avec ses paramètres (« tool call »).</dd>
+    <dt>contexte</dt><dd>Tout ce que le modèle voit à un instant donné : consignes, historique, résultats d'outils.</dd>
+    <dt>MCP</dt><dd>Model Context Protocol. Un standard ouvert pour brancher des outils et des sources de données sur un agent.</dd>
+    <dt>multi-agents</dt><dd>Plusieurs agents qui se répartissent une tâche, par exemple un coordinateur et des agents spécialisés.</dd>
+    <dt>humain dans la boucle</dt><dd>Une personne valide certaines actions avant que l'agent ne les exécute.</dd>
+  </dl>
+</section>
+
+<footer>
+  En une phrase : un agent IA, c'est un modèle de langage placé dans une boucle, équipé d'outils et chargé d'un objectif, qui décide lui-même de ses actions jusqu'à l'atteindre.
+</footer>
+
+</div>
+</body>
+</html>
